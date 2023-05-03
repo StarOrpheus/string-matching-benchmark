@@ -1,8 +1,8 @@
 #include <array>
 #include <iostream>
 #include <map>
-#include <utility>
 #include <unordered_map>
+#include <utility>
 
 #include "benchmark/benchmark.h"
 
@@ -21,7 +21,7 @@ enum class COMMAND {
   INVALID
 };
 
-constexpr auto TEST_DATA_SIZE = 1024 * 1024;
+constexpr auto TestDataSize = 1024 * 1024;
 
 namespace {
 
@@ -41,12 +41,12 @@ std::vector<std::string> genTestData() noexcept {
 
   std::vector<std::string> Result;
 
-  for (size_t I = 0; I < TEST_DATA_SIZE / 2; ++I) {
+  for (size_t I = 0; I < TestDataSize / 2; ++I) {
     Result.emplace_back(
         CorrectCommands[nextRandomU32() % CorrectCommands.size()]);
   }
 
-  for (size_t I = 0; I < TEST_DATA_SIZE / 2; ++I) {
+  for (size_t I = 0; I < TestDataSize / 2; ++I) {
     Result.emplace_back(
         InvalidCommands[nextRandomU32() % InvalidCommands.size()]);
   }
@@ -117,10 +117,9 @@ void BM_std_array(benchmark::State &St) {
 
   for (auto _ : St) {
     for (auto &&Line : TestData) {
-      auto Iter = std::find_if(TranslationTable.begin(), TranslationTable.end(),
-                               [&] (auto&& EntryPair) {
-                                 return EntryPair.first == Line;
-                               });
+      auto Iter = std::find_if(
+          TranslationTable.begin(), TranslationTable.end(),
+          [&](auto &&EntryPair) { return EntryPair.first == Line; });
       COMMAND TranslationResult =
           Iter == TranslationTable.end() ? COMMAND::INVALID : Iter->second;
       benchmark::DoNotOptimize(TranslationResult);
@@ -130,5 +129,40 @@ void BM_std_array(benchmark::State &St) {
 
 BENCHMARK(BM_std_array);
 
+COMMAND ifCommandTranslation(std::string_view Line) {
+  if (Line == "print")
+    return COMMAND::PRINT;
+  if (Line == "hello")
+    return COMMAND::PRINT;
+  if (Line == "world")
+    return COMMAND::PRINT;
+  if (Line == "foo")
+    return COMMAND::PRINT;
+  if (Line == "bar")
+    return COMMAND::PRINT;
+  if (Line == "baz")
+    return COMMAND::PRINT;
+  if (Line == "foobar")
+    return COMMAND::PRINT;
+  if (Line == "foobaz")
+    return COMMAND::PRINT;
+  if (Line == "test")
+    return COMMAND::PRINT;
+  if (Line == "zaz")
+    return COMMAND::PRINT;
+  return COMMAND::INVALID;
+}
+
+void BM_plain_ifs(benchmark::State &St) {
+  auto TestData = genTestData();
+
+  for (auto _ : St) {
+    for (auto &&Line : TestData) {
+      benchmark::DoNotOptimize(ifCommandTranslation(Line));
+    }
+  }
+}
+
+BENCHMARK(BM_plain_ifs);
 
 } // namespace
